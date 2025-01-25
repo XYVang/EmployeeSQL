@@ -1,5 +1,8 @@
 {
+  "type": "module",
   "dependencies": {
-    "inquirer": "^8.2.4"
+    "dotenv": "^16.4.7",
+    "inquirer": "^8.2.6",
+    "pg": "^8.13.1"
   }
 }
