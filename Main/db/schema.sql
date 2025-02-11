@@ -1,14 +1,16 @@
 DROP DATABASE IF EXISTS department_db;
 CREATE DATABASE department_db;
-/*
+
 DROP TABLE employee;
 DROP TABLE role;
 DROP TABLE department;
-*/
+
+\c department_db
+
 
 CREATE TABLE department (
     id SERIAL PRIMARY KEY,
-    department_name VARCHAR(30) NOT NULL
+    name VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE role (

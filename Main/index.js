@@ -52,7 +52,7 @@ function menu() {
 
 // Functions to do the prompted choices above
 function viewAllDepartments() {
-    pool.query('SELECT * FROM department', (err, result) => {
+    pool.query('SELECT department.id, name FROM department', (err, result) => {
         if (err) {
             console.error('Error executing query:', err);
         } 
@@ -65,106 +65,107 @@ function viewAllDepartments() {
 
 
 function viewAllRoles() {
-    // Shows role id, department name they belong to, title and salary
-    pool.query('SELECT r.id, d.department_name, r.title, r.salary FROM role r JOIN department d ON r.department_id = d.id;', (err, result) => {
-        if (err) {
-            console.error('Error executing query:', err);
-        } 
-        else {
-            console.table(result.rows);
+    // Shows role id, department name they belong to, title, and salary
+    pool.query(
+        `SELECT r.id, d.name AS department_name, r.title, r.salary FROM role r JOIN department d ON r.department_id = d.id;`, 
+        (err, result) => {
+            if (err) {
+                console.error('Error executing query:', err);
+            } 
+            else {
+                console.table(result.rows);
+            }
+            menu();
         }
-        menu();
-    });
+    );
 }
 
 function viewAllEmployees() {
-    // Shows the employee's id, names, title, department name, salary and manager names
-    pool.query('SELECT e.id AS employee_id, e.first_name, e.last_name, r.title AS job_title, d.department_name, r.salary, m.first_name AS manager_first_name, m.last_name AS manager_last_name FROM employee e JOIN role r ON e.role_id = r.id JOIN department d ON r.department_id = d.id LEFT JOIN employee m ON e.manager_id = m.id;', (err, result) => {
-        if (err) {
-            console.error('Error executing query:', err);
-        } 
-        else {
-            console.table(result.rows);
+    // Shows the employee's id, names, title, department name, salary, and manager names
+    pool.query(
+        `SELECT e.id AS employee_id, e.first_name, e.last_name, r.title AS job_title, d.name AS department_name, r.salary, m.first_name AS manager_first_name, m.last_name AS manager_last_name FROM employee e JOIN role r ON e.role_id = r.id JOIN department d ON r.department_id = d.id LEFT JOIN employee m ON e.manager_id = m.id;`, 
+        (err, result) => {
+            if (err) {
+                console.error('Error executing query:', err);
+            } 
+            else {
+                console.table(result.rows);
+            }
+            menu();
         }
-        menu();
-    });
+    );
 }
 
 function addDepartment () {
     inquirer
         .prompt([
-        {
-            type: 'input',
-            name: 'newDepartment',
-            message: 'Enter a name for the new department',
-        }
-    ])
-    .then((answers) => {
-        let newDepartment = answers.newDepartment;
-        pool.query(`INSERT INTO department (department_name) VALUES ${newDepartment}`,(err, result) => {
-            if (err) {
-                console.error('Error executing query:', err);
-            } 
-            else {
-                console.table(`New department ${newDepartment} has been added`);
+            {
+                type: 'input',
+                name: 'newDepartment',
+                message: 'Enter a name for the new department',
             }
-            menu();
-        });
-    });
-}
+        ])
+        .then((answers) => {
+            let newDepartment = answers.newDepartment;
 
-function addRole() {
-    pool.query(`SELECT id, department_name FROM department`, (err, result) => {
-        if (err) {
-            console.log('Error executing query:', err);
-        } 
-        else if (result) {
-            // Create an array of department names
-            const departments = result.rows;
-            const nameOfDepartments = departments.map(row => row.department_name);
-
-            inquirer
-                .prompt([
-                {
-                    type: 'input',
-                    name: 'newRole',
-                    message: 'Enter a name for the new role',
-                },
-                {
-                    type: 'input',
-                    name: 'newSalary',
-                    message: 'Enter a salary',
-                },
-                {
-                    type: 'list',
-                    name: 'departmentForRole',
-                    message: 'Which department does the role belong to',
-                    choices: nameOfDepartments,
-                }
-            ])
-            .then((answers) => {
-                let { newRole, newSalary, departmentForRole } = answers;
-
-                // This will find the department ID based on selected name of department
-                const selectedDepartment = departments.find(department => department.department_name === departmentForRole);
-                const departmentId = selectedDepartment.id;
-
-                pool.query(`INSERT INTO role (title, salary, department_id) VALUES ('${newRole}',${newSalary},${departmentId})`, (err, result) => {
+            pool.query(`INSERT INTO department (name) VALUES ($1)`, [newDepartment], 
+                (err, result) => {
                     if (err) {
                         console.error('Error executing query:', err);
                     } 
                     else {
-                        console.table(`New role ${role} has been added`);
+                        console.log(`New department '${newDepartment}' has been added`);
                     }
                     menu();
-                });
+                }
+            );
+        });
+}
+
+function addRole() {
+    pool.query(`SELECT id, name FROM department`, (err, results) => {
+        if (err) {
+            console.error("Error trying to get departments:", err);
+            return;
+        }
+
+        const departments = results.rows.map(department => ({name: department.name, value: department.id}));
+
+        inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'roleTitle',
+                    message: 'Enter the title for the new role:',
+                },
+                {
+                    type: 'input',
+                    name: 'roleSalary',
+                    message: 'Enter the salary for the new role:',
+                },
+                {
+                    type: 'list',
+                    name: 'departmentId',
+                    message: 'Select the department for this role:',
+                    choices: departments
+                }
+            ])
+            .then(answers => {
+                const { roleTitle, roleSalary, departmentId } = answers;
+
+                pool.query(`INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)`, [roleTitle, roleSalary, departmentId],
+                    (err, result) => {
+                        if (err) {
+                            console.error("Error executing query:", err);
+                        } 
+                        else {
+                            console.log(`New role '${roleTitle}' has been added.`);
+                        }
+                        menu();
+                    }
+                );
             });
-        }
-        else {
-            console.log('Departments not found')
-            menu();
-        }
-    })       
+    });
 }
 
 function addEmployee() {
