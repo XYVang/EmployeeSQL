@@ -1,5 +1,6 @@
+\c department_db
 
-INSERT INTO department (department_name)
+INSERT INTO department (name)
 VALUES  ('Sales'),
         ('Engineering'),
         ('Legal');
@@ -13,6 +14,9 @@ VALUES  ('Sales Manager', 80000, 1),
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES  ('Xavier', 'Vang', 2, NULL),
-        ('Nicolas', 'Cage', 1, NULL),
-        ('Ari', 'Frueta', 3, 9),
-        ('Bones', 'Jones', 4, 10);
+        ('Nicolas', 'Cage', 1, NULL);
+
+
+INSERT INTO employee (first_name, last_name, role_id, manager_id)
+VALUES  ('Ari', 'Frueta', 3, 1),
+        ('Bones', 'Jones', 4, 2);
